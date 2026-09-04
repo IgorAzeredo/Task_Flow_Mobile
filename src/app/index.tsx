@@ -1,98 +1,160 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  FlatList,
+} from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { useState } from 'react';
+import TaskItem from '../components/TaskItem';
 
 export default function HomeScreen() {
+  const [tarefa, setTarefa] = useState('');
+  type Tarefa = {
+  texto: string;
+  concluida: boolean;
+};
+
+const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+
+  function adicionarTarefa() {
+    if (tarefa.trim() === '') {
+      return;
+    }
+
+   setTarefas([
+  ...tarefas,
+  {
+    texto: tarefa,
+    concluida: false,
+  },
+]);
+    setTarefa('');
+  }
+
+  function excluirTarefa(index: number) {
+    const novasTarefas = tarefas.filter((_, i) => i !== index);
+    setTarefas(novasTarefas);
+  }
+
+  function alternarTarefa(index: number) {
+  const novasTarefas = [...tarefas];
+
+  novasTarefas[index].concluida =
+    !novasTarefas[index].concluida;
+
+  setTarefas(novasTarefas);
+}
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.container}>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <Text style={styles.titulo}>📝 TaskFlow</Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <Text style={styles.subtitulo}>
+        Organize suas tarefas
+      </Text>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <TextInput
+        style={styles.input}
+        placeholder="Digite uma tarefa..."
+        value={tarefa}
+        onChangeText={setTarefa}
+      />
+
+      <TouchableOpacity
+        style={styles.botao}
+        onPress={adicionarTarefa}
+      >
+        <Text style={styles.textoBotao}>
+          + Adicionar tarefa
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.tituloLista}>
+        Minhas tarefas
+      </Text>
+
+    <FlatList
+  data={tarefas}
+  keyExtractor={(item, index) => index.toString()}
+  renderItem={({ item, index }) => (
+    <TaskItem
+      tarefa={item.texto}
+      concluida={item.concluida}
+      onDelete={() => excluirTarefa(index)}
+      onToggle={() => alternarTarefa(index)}
+    />
+  )}
+/>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    padding: 25,
+    paddingTop: 70,
+    backgroundColor: '#f5f7fb',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
+
+  titulo: {
+    fontSize: 32,
+    fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 8,
   },
-  code: {
-    textTransform: 'uppercase',
+
+  subtitulo: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 30,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+
+  botao: {
+    backgroundColor: '#3478f6',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  textoBotao: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
+
+  tituloLista: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 30,
+    marginBottom: 15,
+  },
+
+  tarefa: {
+    backgroundColor: '#fff',
+    padding: 18,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+
+  textoTarefa: {
+    fontSize: 17,
   },
 });
